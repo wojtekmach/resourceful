@@ -19,7 +19,10 @@ defmodule Resourceful.MixProject do
   end
 
   defp deps do
-    []
+    [
+      {:phoenix, "~> 1.2"},
+      {:ecto, "~> 2.2"}
+    ]
   end
 
   defp aliases do
