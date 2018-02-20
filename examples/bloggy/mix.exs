@@ -44,17 +44,26 @@ defmodule Bloggy.Mixfile do
     ]
   end
 
-  # Aliases are shortcuts or tasks specific to the current project.
-  # For example, to create, migrate and run the seeds file at once:
-  #
-  #     $ mix ecto.setup
-  #
-  # See the documentation for `Mix` for more info on aliases.
   defp aliases do
     [
-      "ecto.setup": ["ecto.create", "ecto.migrate", "run priv/repo/seeds.exs"],
-      "ecto.reset": ["ecto.drop", "ecto.setup"],
+      "setup": ["deps.get", &setup_yarn/1, "ecto.drop", "ecto.create", "ecto.migrate", &maybe_seed/1],
+      server: ["phx.server"],
       "test": ["ecto.create --quiet", "ecto.migrate", "test"]
     ]
+  end
+
+  defp maybe_seed(_) do
+    if Mix.env() == :dev do
+      Mix.Tasks.Run.run(["priv/repo/seeds.exs"])
+    end
+  end
+
+  defp setup_yarn(_) do
+    cmd(~w(yarn install), cd: "assets")
+  end
+
+  defp cmd([command | args], opts) do
+    opts = Keyword.put_new(opts, :into, IO.stream(:stdio, :line))
+    {_, 0} = System.cmd(command, args, opts)
   end
 end
