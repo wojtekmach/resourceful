@@ -1,7 +1,41 @@
 defmodule Resourceful do
-  defmacro resource(schema, table, opts) do
+  defmacro resource(context, schema, table, opts) do
     quote [location: :keep] do
       fields = Resourceful.SchemaBuilder.fields(unquote(table), unquote(opts))
+
+      defmodule unquote(context) do
+        @schema unquote(schema)
+        @fields fields
+        @repo Keyword.fetch!(unquote(opts), :repo)
+
+        def list() do
+          @repo.all(@schema)
+        end
+
+        def create(params) do
+          struct(@schema)
+          |> changeset(params)
+          |> @repo.insert()
+        end
+
+        def get!(id) do
+          @repo.get!(@schema, id)
+        end
+
+        def update(struct, params) do
+          struct
+          |> changeset(params)
+          |> @repo.update()
+        end
+
+        def delete(struct) do
+          @repo.delete(struct)
+        end
+
+        def changeset(struct, params) do
+          Ecto.Changeset.cast(struct, params, Keyword.keys(@fields))
+        end
+      end
 
       defmodule unquote(schema) do
         use Ecto.Schema
