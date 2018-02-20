@@ -1,12 +1,14 @@
 defmodule Resourceful do
-  defmacro resource(context, schema, table, opts) do
+  defmacro resource(_name, opts) do
     quote [location: :keep] do
-      fields = Resourceful.SchemaBuilder.fields(unquote(table), unquote(opts))
+      resource = Enum.into(unquote(opts), %{})
+      fun = fn -> Resourceful.SchemaBuilder.fields_from_table(resource.repo, resource.table) end
+      resource = Map.put_new_lazy(resource, :fields, fun)
 
-      defmodule unquote(context) do
-        @schema unquote(schema)
-        @fields fields
-        @repo Keyword.fetch!(unquote(opts), :repo)
+      defmodule resource.context do
+        @schema resource.schema
+        @fields resource.fields
+        @repo resource.repo
 
         def list() do
           @repo.all(@schema)
@@ -37,11 +39,11 @@ defmodule Resourceful do
         end
       end
 
-      defmodule unquote(schema) do
+      defmodule resource.schema do
         use Ecto.Schema
-        @fields fields
+        @fields resource.fields
 
-        schema unquote(table) do
+        schema resource.table do
           for {name, type} <- @fields do
             field name, type
           end
@@ -54,12 +56,7 @@ end
 defmodule Resourceful.SchemaBuilder do
   @moduledoc false
 
-  def fields(table, opts) do
-    repo = Keyword.fetch!(opts, :repo)
-    Keyword.get_lazy(opts, :fields, fn -> fields_from_table(repo, table) end)
-  end
-
-  defp fields_from_table(repo, table) do
+  def fields_from_table(repo, table) do
     Application.ensure_all_started(:ecto)
     Application.ensure_all_started(:postgrex)
     repo_module = Keyword.fetch!(repo.config(), :repo)

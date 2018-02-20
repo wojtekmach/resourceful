@@ -3,7 +3,7 @@ defmodule BloggyWeb.AdminTest do
   alias BloggyWeb.Admin.{Blog, Blog.Post}
 
   test "schema" do
-    assert Blog.Post.__schema__(:types) == %{id: :id, title: :string, body: :string}
+    assert Post.__schema__(:types) == %{id: :id, title: :string, body: :string}
   end
 
   test "context" do
