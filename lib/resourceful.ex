@@ -262,10 +262,17 @@ defmodule Resourceful.ViewHelpers do
       date_select(f, name, opts)
     end
   end
+  def input(f, name, :url, opts) do
+    url_input(f, name, opts)
+  end
 
   def display(struct, name, type, opts \\ [])
   def display(struct, name, :text, _opts) do
     Phoenix.HTML.Format.text_to_html(Map.fetch!(struct, name))
+  end
+  def display(struct, name, :url, _opts) do
+    value = Map.fetch!(struct, name)
+    link value, to: value
   end
   def display(struct, name, _, _opts) do
     Map.fetch!(struct, name)
