@@ -18,6 +18,9 @@ defmodule Resourceful do
 
       fun = fn -> Resourceful.SchemaBuilder.fields_from_table(resource.repo, resource.table) end
       resource = Map.put_new_lazy(resource, :fields, fun)
+      resource = Map.put(resource,
+                         :field_html_types,
+                         Keyword.merge(resource.fields, Map.get(resource, :field_html_types, [])))
 
       defmodule resource.context do
         @schema resource.schema

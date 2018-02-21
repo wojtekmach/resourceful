@@ -5,7 +5,7 @@
     </div>
   <% end %>
 
-<%= for {name, type} <- @resource.fields do %>
+<%= for {name, type} <- @resource.field_html_types do %>
   <div class="form-group">
     <%= input f, name, type, class: "form-control" %>
   </div>

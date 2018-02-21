@@ -1,7 +1,9 @@
 <h2>Show <%= @resource.singular %></h2>
 
+<%= inspect @resource %>
+
 <ul>
-<%= for {name, type} <- @resource.fields do %>
+<%= for {name, type} <- @resource.field_html_types do %>
   <li>
     <strong><%= Phoenix.Naming.humanize(name)%>:</strong>
     <%= display @struct, name, type %>

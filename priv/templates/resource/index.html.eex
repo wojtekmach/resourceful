@@ -13,8 +13,8 @@
   <tbody>
 <%= for struct <- @structs do %>
     <tr>
-<%= for {name, _} <- @resource.fields do %>
-      <td><%= Map.fetch!(struct, name) %></td>
+<%= for {name, type} <- @resource.field_html_types do %>
+      <td><%= display struct, name, type %></td>
 <% end %>
 
       <td class="text-right">
