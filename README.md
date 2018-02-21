@@ -5,6 +5,12 @@ Rapid prototyping tool for Phoenix.
 - It differs from ExAdmin in that it's using generated source code instead of relying on configuration. (not done yet)
 - It differs from Torch   in that it's relying on configuration instead of using generated source code. :-)
 
+Goals:
+
+- Zero dependencies (besides Phoenix and Ecto)
+- Minimal configuration to get something working
+- Fully customizable (every piece can be replaced)
+
 ## License
 
 License
