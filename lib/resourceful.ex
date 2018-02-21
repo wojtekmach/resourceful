@@ -1,9 +1,21 @@
 defmodule Resourceful do
   defmacro resource(name, opts) do
-    error_helpers = Keyword.fetch!(opts, :error_helpers)
-
     quote [location: :keep] do
-      resource = Enum.into(unquote(opts), %{name: unquote(name)})
+      resource_name = unquote(name)
+      resource = Enum.into(unquote(opts), %{name: resource_name})
+      app_namespace = Map.fetch!(resource, :app_namespace)
+      web_namespace = Map.fetch!(resource, :web_namespace)
+      table = Map.fetch!(resource, :table)
+
+      resource =
+        resource
+        |> Map.put_new(:singular, Phoenix.Naming.humanize(resource_name))
+        |> Map.put_new(:plural, Phoenix.Naming.humanize(table))
+        |> Map.put_new(:repo, Module.concat([app_namespace, Repo]))
+        |> Map.put_new(:routes, Module.concat([web_namespace, Router, Helpers]))
+        |> Map.put_new(:error_helpers, Module.concat([web_namespace, ErrorHelpers]))
+        |> Map.put_new(:layout, {Module.concat([web_namespace, LayoutView]), "app.html"})
+
       fun = fn -> Resourceful.SchemaBuilder.fields_from_table(resource.repo, resource.table) end
       resource = Map.put_new_lazy(resource, :fields, fun)
 
@@ -75,7 +87,7 @@ defmodule Resourceful do
         use Phoenix.HTML
         import Phoenix.Controller, only: [get_flash: 2, view_module: 1], warn: false
         import Resourceful.Routes
-        import unquote(error_helpers)
+        @resource resource
 
         def input(f, name, type, opts) do
           content_tag :div, class: "form-group" do
@@ -85,6 +97,14 @@ defmodule Resourceful do
               error_tag(f, name)
             ]
           end
+        end
+
+        def error_tag(form, field) do
+          @resource.error_helpers.error_tag(form, field)
+        end
+
+        def translate_error(arg) do
+          @resource.error_helpers.translate_error(arg)
         end
       end
     end
