@@ -1,0 +1,32 @@
+<h2>Listing <%= @resource.plural %></h2>
+
+<table class="table">
+  <thead>
+    <tr>
+<%= for {name, _type} <- @resource.fields do %>
+      <th><%= Phoenix.Naming.humanize(name) %></th>
+<% end %>
+
+      <th></th>
+    </tr>
+  </thead>
+  <tbody>
+<%= for struct <- @structs do %>
+    <tr>
+<%= for {name, _} <- @resource.fields do %>
+      <td><%= Map.fetch!(struct, name) %></td>
+<% end %>
+
+      <td class="text-right">
+        <span><%= link "Show", to: resource_path(@conn, @resource, [:show, struct]), class: "btn btn-default btn-xs" %></span>
+        <span><%= link "Delete",
+                       to: resource_path(@conn, @resource, [:delete, struct]),
+                       method: :delete, data: [confirm: "Are you sure?"],
+                       class: "btn btn-danger btn-xs" %></span>
+      </td>
+    </tr>
+<% end %>
+  </tbody>
+</table>
+
+<span><%= link "New #{@resource.singular}", to: resource_path(@conn, @resource, [:new]) %></span>

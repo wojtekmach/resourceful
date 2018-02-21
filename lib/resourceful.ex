@@ -1,7 +1,9 @@
 defmodule Resourceful do
-  defmacro resource(_name, opts) do
+  defmacro resource(name, opts) do
+    error_helpers = Keyword.fetch!(opts, :error_helpers)
+
     quote [location: :keep] do
-      resource = Enum.into(unquote(opts), %{})
+      resource = Enum.into(unquote(opts), %{name: unquote(name)})
       fun = fn -> Resourceful.SchemaBuilder.fields_from_table(resource.repo, resource.table) end
       resource = Map.put_new_lazy(resource, :fields, fun)
 
@@ -49,6 +51,32 @@ defmodule Resourceful do
           end
         end
       end
+
+      defmodule resource.controller do
+        @resource resource
+
+        import Plug.Conn
+
+        def init(opts) do
+          opts
+        end
+
+        def call(conn, action) do
+          conn
+          |> put_private(:resourceful_resource, @resource)
+          |> Phoenix.Controller.put_layout(@resource.layout)
+          |> Phoenix.Controller.put_view(@resource.view)
+          |> Resourceful.ResourceController.call(action)
+        end
+      end
+
+      defmodule resource.view do
+        use Phoenix.View, root: Path.join([:code.priv_dir(:resourceful), "templates"]), path: "resource"
+        use Phoenix.HTML
+        import Phoenix.Controller, only: [get_flash: 2, view_module: 1], warn: false
+        import Resourceful.Routes
+        import unquote(error_helpers)
+      end
     end
   end
 end
@@ -81,4 +109,88 @@ defmodule Resourceful.SchemaBuilder do
 
   defp to_ecto_type("character varying"), do: :string
   defp to_ecto_type("text"), do: :string
+end
+
+defmodule Resourceful.Routes do
+  def resource_path(conn, resource, args) do
+    fun = :"#{resource.scope}_#{resource.name}_path"
+    apply(resource.routes, fun, [conn | args])
+  end
+
+  def resource_url(conn, resource, args) do
+    fun = :"#{resource.scope}_#{resource.name}_url"
+    apply(resource.routes, fun, [conn | args])
+  end
+end
+
+defmodule Resourceful.ResourceController do
+  use Phoenix.Controller
+  import Resourceful.Routes
+
+  defp resource(conn) do
+    conn.private.resourceful_resource
+  end
+
+  def index(conn, _params) do
+    resource = resource(conn)
+    structs = resource.context.list()
+    render(conn, "index.html", resource: resource(conn), structs: structs)
+  end
+
+  def new(conn, _params) do
+    resource = resource(conn)
+    changeset = resource.context.changeset(struct(resource(conn).schema), %{})
+    render(conn, "new.html", resource: resource(conn), changeset: changeset)
+  end
+
+  def create(conn, %{"resource" => params}) do
+    resource = resource(conn)
+    case resource.context.create(params) do
+      {:ok, struct} ->
+        conn
+        |> put_flash(:info, "#{resource(conn).singular} created successfully.")
+        |> redirect(to: resource_path(conn, resource(conn), [:show, struct]))
+
+      {:error, %Ecto.Changeset{} = changeset} ->
+        render(conn, "new.html", resource: resource(conn), changeset: changeset)
+    end
+  end
+
+  def show(conn, %{"id" => id}) do
+    resource = resource(conn)
+    struct = resource.context.get!(id)
+    render(conn, "show.html", resource: resource(conn), struct: struct)
+  end
+
+  def edit(conn, %{"id" => id}) do
+    resource = resource(conn)
+    struct = resource.context.get!(id)
+    changeset = resource.context.changeset(struct, %{})
+    render(conn, "edit.html", resource: resource(conn), struct: struct, changeset: changeset)
+  end
+
+  def update(conn, %{"id" => id, "resource" => params}) do
+    resource = resource(conn)
+    struct = resource.context.get!(id)
+
+    case resource.context.update(struct, params) do
+      {:ok, struct} ->
+        conn
+        |> put_flash(:info, "#{resource(conn).singular} updated successfully.")
+        |> redirect(to: resource_path(conn, resource(conn), [:show, struct]))
+
+      {:error, %Ecto.Changeset{} = changeset} ->
+        render(conn, "edit.html", resource: resource(conn), struct: struct, changeset: changeset)
+    end
+  end
+
+  def delete(conn, %{"id" => id}) do
+    resource = resource(conn)
+    struct = resource.context.get!(id)
+    {:ok, _club} = resource.context.delete(struct)
+
+    conn
+    |> put_flash(:info, "#{resource(conn).singular} deleted successfully.")
+    |> redirect(to: resource_path(conn, resource(conn), [:index]))
+  end
 end

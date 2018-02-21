@@ -14,13 +14,14 @@ defmodule BloggyWeb.Router do
   end
 
   scope "/", BloggyWeb do
-    pipe_through :browser # Use the default browser stack
+    pipe_through :browser
 
     get "/", PageController, :index
   end
 
-  # Other scopes may use custom stacks.
-  # scope "/api", BloggyWeb do
-  #   pipe_through :api
-  # end
+  scope "/admin", BloggyWeb.Admin, as: :admin do
+    pipe_through :browser
+
+    resources "/posts", PostController
+  end
 end

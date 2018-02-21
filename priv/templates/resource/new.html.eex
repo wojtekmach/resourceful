@@ -1,0 +1,5 @@
+<h2>New <%= @resource.singular %></h2>
+
+<%= render "form.html", Map.put(assigns, :action, resource_path(@conn, @resource, [:create])) %>
+
+<span><%= link "Back", to: resource_path(@conn, @resource, [:index]) %></span>
