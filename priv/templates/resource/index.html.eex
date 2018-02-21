@@ -3,7 +3,7 @@
 <table class="table">
   <thead>
     <tr>
-<%= for {name, _type} <- @resource.fields do %>
+<%= for {name, {_type, _opts}} <- @resource.fields do %>
       <th><%= Phoenix.Naming.humanize(name) %></th>
 <% end %>
 
@@ -13,7 +13,7 @@
   <tbody>
 <%= for struct <- @structs do %>
     <tr>
-<%= for {name, type} <- @resource.field_html_types do %>
+<%= for {name, {type, _}} <- @resource.field_html_types do %>
       <td><%= display struct, name, type %></td>
 <% end %>
 

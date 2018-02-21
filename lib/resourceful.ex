@@ -18,9 +18,13 @@ defmodule Resourceful do
 
       fun = fn -> Resourceful.SchemaBuilder.fields_from_table(resource.repo, resource.table) end
       resource = Map.put_new_lazy(resource, :fields, fun)
-      resource = Map.put(resource,
-                         :field_html_types,
-                         Keyword.merge(resource.fields, Map.get(resource, :field_html_types, [])))
+      field_html_types = Map.get(resource, :field_html_types, [])
+      field_html_types =
+        for {name, {type, opts}} <- resource.fields do
+          html_type = Keyword.get(field_html_types, name, type)
+          {name, {html_type, opts}}
+        end
+      resource = Map.put(resource, :field_html_types, field_html_types)
 
       defmodule resource.context do
         @schema resource.schema
@@ -52,7 +56,14 @@ defmodule Resourceful do
         end
 
         def changeset(struct, params) do
-          Ecto.Changeset.cast(struct, params, Keyword.keys(@fields))
+          changeset = Ecto.Changeset.cast(struct, params, Keyword.keys(@fields))
+          Enum.reduce(@fields, changeset, fn {name, {_type, opts}}, changeset ->
+            if opts[:nullable?] == false do
+              Ecto.Changeset.validate_required(changeset, name)
+            else
+              changeset
+            end
+          end)
         end
       end
 
@@ -61,7 +72,7 @@ defmodule Resourceful do
         @fields resource.fields
 
         schema resource.table do
-          for {name, type} <- @fields do
+          for {name, {type, _opts}} <- @fields do
             field name, Resourceful.SchemaBuilder.ecto_type(type)
           end
         end
@@ -93,11 +104,18 @@ defmodule Resourceful do
         import Resourceful.ViewHelpers, only: [display: 3, display: 4], warn: false
         @resource resource
 
-        def input(f, name, type, opts) do
+        def input(f, name, type, opts, html_opts) do
+          label_text =
+            if opts[:nullable?] do
+              Phoenix.Naming.humanize(name)
+            else
+              Phoenix.Naming.humanize(name) <> "*"
+            end
+
           content_tag :div, class: "form-group" do
             [
-              label(f, name, class: "control-label"),
-              Resourceful.ViewHelpers.input(f, name, type, opts),
+              label(f, name, label_text, class: "control-label"),
+              Resourceful.ViewHelpers.input(f, name, type, html_opts),
               error_tag(f, name)
             ]
           end
@@ -128,9 +146,12 @@ defmodule Resourceful.SchemaBuilder do
     result = get_fields(repo, table)
     columns = Enum.map(result.rows, &Enum.into(Enum.zip(result.columns, &1), %{}))
 
-    for %{"column_name" => name, "data_type" => type} <- columns,
-        name != "id" do
-      {String.to_atom(name), resourceful_type(type)}
+    for row <- columns, row["column_name"] != "id" do
+      name = String.to_atom(row["column_name"])
+      type = resourceful_type(row["data_type"])
+      nullable? = row["is_nullable"] == "YES"
+
+      {name, {type, nullable?: nullable?}}
     end
   end
 

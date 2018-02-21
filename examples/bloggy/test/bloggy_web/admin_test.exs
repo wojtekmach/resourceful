@@ -29,6 +29,11 @@ defmodule BloggyWeb.AdminTest do
     assert [] = Blog.list()
   end
 
+  test "constraints" do
+    {:error, changeset} = Authors.create(%{name: ""})
+    assert {"can't be blank", _} = changeset.errors[:name]
+  end
+
   test "controller" do
     conn = get(build_conn(), "/admin/posts")
     assert html_response(conn, 200) =~ "Listing Posts"

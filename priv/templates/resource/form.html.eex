@@ -5,9 +5,9 @@
     </div>
   <% end %>
 
-<%= for {name, type} <- @resource.field_html_types do %>
+<%= for {name, {type, opts}} <- @resource.field_html_types do %>
   <div class="form-group">
-    <%= input f, name, type, class: "form-control" %>
+    <%= input f, name, type, opts, class: "form-control" %>
   </div>
 <% end %>
 
