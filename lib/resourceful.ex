@@ -76,6 +76,16 @@ defmodule Resourceful do
         import Phoenix.Controller, only: [get_flash: 2, view_module: 1], warn: false
         import Resourceful.Routes
         import unquote(error_helpers)
+
+        def input(f, name, type, opts) do
+          content_tag :div, class: "form-group" do
+            [
+              label(f, name, class: "control-label"),
+              Resourceful.ViewHelpers.input(f, name, type, opts),
+              error_tag(f, name)
+            ]
+          end
+        end
       end
     end
   end
@@ -192,5 +202,13 @@ defmodule Resourceful.ResourceController do
     conn
     |> put_flash(:info, "#{resource(conn).singular} deleted successfully.")
     |> redirect(to: resource_path(conn, resource(conn), [:index]))
+  end
+end
+
+defmodule Resourceful.ViewHelpers do
+  use Phoenix.HTML
+
+  def input(f, name, :string, opts) do
+    text_input(f, name, opts)
   end
 end

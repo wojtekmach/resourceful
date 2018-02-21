@@ -5,11 +5,9 @@
     </div>
   <% end %>
 
-<%= for {name, _type} <- @resource.fields do %>
+<%= for {name, type} <- @resource.fields do %>
   <div class="form-group">
-    <%= label f, name, class: "control-label" %>
-    <%= text_input f, name, class: "form-control" %>
-    <%= error_tag f, name  %>
+    <%= input f, name, type, class: "form-control" %>
   </div>
 <% end %>
 
