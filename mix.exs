@@ -21,6 +21,7 @@ defmodule Resourceful.MixProject do
   defp deps do
     [
       {:phoenix, "~> 1.2"},
+      {:phoenix_html, "~> 2.10"},
       {:ecto, "~> 2.2"}
     ]
   end
