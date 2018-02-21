@@ -101,14 +101,8 @@ defmodule Resourceful.SchemaBuilder do
     children = [repo_module]
     Supervisor.start_link(children, strategy: :one_for_one)
 
-    sql = """
-    SELECT *
-    FROM information_schema.columns
-    WHERE table_schema = 'public'
-    AND table_name = $1;
-    """
-
-    result = repo.query!(sql, [table])
+    sql = "SELECT * FROM information_schema.columns WHERE table_schema = $1 AND table_name = $2"
+    result = repo.query!(sql, ["public", table])
     columns = Enum.map(result.rows, &Enum.into(Enum.zip(result.columns, &1), %{}))
 
     for %{"column_name" => name, "data_type" => type} <- columns,
