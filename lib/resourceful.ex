@@ -234,6 +234,7 @@ defmodule Resourceful.ViewHelpers do
   end
 
   def input(f, name, :text, opts) do
+    opts = Keyword.put_new(opts, :rows, 5)
     textarea(f, name, opts)
   end
 end
