@@ -47,7 +47,7 @@ defmodule Resourceful do
 
         schema resource.table do
           for {name, type} <- @fields do
-            field name, type
+            field name, Resourceful.SchemaBuilder.ecto_type(type)
           end
         end
       end
@@ -113,12 +113,15 @@ defmodule Resourceful.SchemaBuilder do
 
     for %{"column_name" => name, "data_type" => type} <- columns,
         name != "id" do
-      {String.to_atom(name), to_ecto_type(type)}
+      {String.to_atom(name), resourceful_type(type)}
     end
   end
 
-  defp to_ecto_type("character varying"), do: :string
-  defp to_ecto_type("text"), do: :string
+  defp resourceful_type("character varying"), do: :string
+  defp resourceful_type("text"), do: :text
+
+  def ecto_type(:text), do: :string
+  def ecto_type(other), do: other
 end
 
 defmodule Resourceful.Routes do
@@ -210,5 +213,9 @@ defmodule Resourceful.ViewHelpers do
 
   def input(f, name, :string, opts) do
     text_input(f, name, opts)
+  end
+
+  def input(f, name, :text, opts) do
+    textarea(f, name, opts)
   end
 end
