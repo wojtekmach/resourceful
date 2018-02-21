@@ -115,20 +115,24 @@ defmodule Resourceful.SchemaBuilder do
   @moduledoc false
 
   def fields_from_table(repo, table) do
-    Application.ensure_all_started(:ecto)
-    Application.ensure_all_started(:postgrex)
     repo_module = Keyword.fetch!(repo.config(), :repo)
-    children = [repo_module]
-    Supervisor.start_link(children, strategy: :one_for_one)
 
-    sql = "SELECT * FROM information_schema.columns WHERE table_schema = $1 AND table_name = $2"
-    result = repo.query!(sql, ["public", table])
+    # TODO: private API!
+    Mix.Ecto.ensure_repo(repo_module, [])
+    Mix.Ecto.ensure_started(repo_module, [])
+
+    result = get_fields(repo, table)
     columns = Enum.map(result.rows, &Enum.into(Enum.zip(result.columns, &1), %{}))
 
     for %{"column_name" => name, "data_type" => type} <- columns,
         name != "id" do
       {String.to_atom(name), resourceful_type(type)}
     end
+  end
+
+  defp get_fields(repo, table) do
+    sql = "SELECT * FROM information_schema.columns WHERE table_schema = $1 AND table_name = $2"
+    repo.query!(sql, ["public", table])
   end
 
   defp resourceful_type("character varying"), do: :string

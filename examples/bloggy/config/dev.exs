@@ -36,6 +36,7 @@ config :bloggy, BloggyWeb.Endpoint,
     patterns: [
       ~r{priv/static/.*(js|css|png|jpeg|jpg|gif|svg)$},
       ~r{priv/gettext/.*(po)$},
+      ~r{lib/bloggy_web/admin.ex$},
       ~r{lib/bloggy_web/views/.*(ex)$},
       ~r{lib/bloggy_web/templates/.*(eex)$}
     ]
