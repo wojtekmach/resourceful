@@ -140,6 +140,7 @@ defmodule Resourceful.SchemaBuilder do
   defp resourceful_type("text"), do: :text
   defp resourceful_type("timestamp without time zone"), do: :utc_datetime
   defp resourceful_type("date"), do: :date
+  defp resourceful_type("bigint"), do: :integer
 
   def ecto_type(:text), do: :string
   def ecto_type(other), do: other
@@ -238,6 +239,9 @@ defmodule Resourceful.ViewHelpers do
   def input(f, name, :text, opts) do
     opts = Keyword.put_new(opts, :rows, 5)
     textarea(f, name, opts)
+  end
+  def input(f, name, :integer, opts) do
+    number_input(f, name, opts)
   end
   def input(f, name, :date, opts) do
     builder = fn b ->
