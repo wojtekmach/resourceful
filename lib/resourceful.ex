@@ -87,6 +87,7 @@ defmodule Resourceful do
         use Phoenix.HTML
         import Phoenix.Controller, only: [get_flash: 2, view_module: 1], warn: false
         import Resourceful.Routes
+        import Resourceful.ViewHelpers, only: [display: 3, display: 4], warn: false
         @resource resource
 
         def input(f, name, type, opts) do
@@ -137,6 +138,8 @@ defmodule Resourceful.SchemaBuilder do
 
   defp resourceful_type("character varying"), do: :string
   defp resourceful_type("text"), do: :text
+  defp resourceful_type("timestamp without time zone"), do: :utc_datetime
+  defp resourceful_type("date"), do: :date
 
   def ecto_type(:text), do: :string
   def ecto_type(other), do: other
@@ -232,9 +235,32 @@ defmodule Resourceful.ViewHelpers do
   def input(f, name, :string, opts) do
     text_input(f, name, opts)
   end
-
   def input(f, name, :text, opts) do
     opts = Keyword.put_new(opts, :rows, 5)
     textarea(f, name, opts)
+  end
+  def input(f, name, :date, opts) do
+    builder = fn b ->
+      [
+        b.(:year, [class: "form-control"]),
+        " / ",
+        b.(:month, [class: "form-control"]),
+        " / ",
+        b.(:day, [class: "form-control"]),
+      ]
+    end
+    opts = Keyword.put_new(opts, :builder, builder)
+
+    content_tag :div, class: "form-inline" do
+      date_select(f, name, opts)
+    end
+  end
+
+  def display(struct, name, type, opts \\ [])
+  def display(struct, name, :text, _opts) do
+    Phoenix.HTML.Format.text_to_html(Map.fetch!(struct, name))
+  end
+  def display(struct, name, _, _opts) do
+    Map.fetch!(struct, name)
   end
 end

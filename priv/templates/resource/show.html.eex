@@ -1,10 +1,10 @@
 <h2>Show <%= @resource.singular %></h2>
 
 <ul>
-<%= for {name, _} <- @resource.fields do %>
+<%= for {name, type} <- @resource.fields do %>
   <li>
     <strong><%= Phoenix.Naming.humanize(name)%>:</strong>
-    <%= Map.fetch!(@struct, name) %>
+    <%= display @struct, name, type %>
   </li>
 <% end %>
 </ul>

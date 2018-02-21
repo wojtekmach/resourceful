@@ -4,7 +4,7 @@ defmodule BloggyWeb.AdminTest do
   alias BloggyWeb.Router.Helpers, as: Routes
 
   test "schema" do
-    assert Post.__schema__(:types) == %{id: :id, title: :string, body: :string}
+    assert %{id: :id, title: :string, body: :string} = Post.__schema__(:types)
   end
 
   test "context" do
