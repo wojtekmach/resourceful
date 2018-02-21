@@ -4,6 +4,7 @@ defmodule Bloggy.Repo.Migrations.CreatePosts do
   def change do
     create table(:authors) do
       add :name, :string, null: false
+      add :website_url, :string
     end
 
     create table(:posts) do

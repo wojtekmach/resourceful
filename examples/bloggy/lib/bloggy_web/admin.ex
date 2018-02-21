@@ -19,5 +19,8 @@ defmodule BloggyWeb.Admin do
     context: BloggyWeb.Admin.Blog.Authors,
     schema: BloggyWeb.Admin.Blog.Author,
     controller: BloggyWeb.Admin.AuthorController,
-    view: BloggyWeb.Admin.AuthorView
+    view: BloggyWeb.Admin.AuthorView,
+    field_html_types: [
+      website_url: :url
+    ]
 end
