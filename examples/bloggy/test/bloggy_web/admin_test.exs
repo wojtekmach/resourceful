@@ -1,6 +1,6 @@
 defmodule BloggyWeb.AdminTest do
   use BloggyWeb.ConnCase, async: true
-  alias BloggyWeb.Admin.{Blog, Blog.Post}
+  alias BloggyWeb.Admin.{Blog, Blog.Post, Blog.Authors}
   alias BloggyWeb.Router.Helpers, as: Routes
 
   test "schema" do
@@ -8,9 +8,11 @@ defmodule BloggyWeb.AdminTest do
   end
 
   test "context" do
+    {:ok, alice} = Authors.create(%{name: "Alice"})
+
     assert [] = Blog.list()
 
-    {:ok, _} = Blog.create(%{title: "Hello", body: "Hello World!"})
+    {:ok, _} = Blog.create(%{title: "Hello", body: "Hello World!", author_id: alice.id})
 
     [post] = Blog.list()
     assert post.title == "Hello"

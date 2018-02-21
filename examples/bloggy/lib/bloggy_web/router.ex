@@ -23,5 +23,6 @@ defmodule BloggyWeb.Router do
     pipe_through :browser
 
     resources "/posts", PostController
+    resources "/authors", AuthorController
   end
 end
