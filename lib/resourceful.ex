@@ -16,7 +16,18 @@ defmodule Resourceful do
         |> Map.put_new(:error_helpers, Module.concat([web_namespace, ErrorHelpers]))
         |> Map.put_new(:layout, {Module.concat([web_namespace, LayoutView]), "app.html"})
 
-      fun = fn -> Resourceful.SchemaBuilder.fields_from_table(resource.repo, resource.table) end
+      fun = fn ->
+        case Resourceful.SchemaBuilder.fields_from_table(resource.repo, resource.table) do
+          {:ok, fields} ->
+            fields
+
+          {:error, _} ->
+            require Logger
+            Logger.warn("could not fetch fields due to DB connection error")
+            []
+        end
+      end
+
       resource = Map.put_new_lazy(resource, :fields, fun)
       field_html_types = Map.get(resource, :field_html_types, [])
       field_html_types =
@@ -143,21 +154,25 @@ defmodule Resourceful.SchemaBuilder do
     Mix.Ecto.ensure_repo(repo_module, [])
     Mix.Ecto.ensure_started(repo_module, [])
 
-    result = get_fields(repo, table)
-    columns = Enum.map(result.rows, &Enum.into(Enum.zip(result.columns, &1), %{}))
+    with {:ok, result} <- get_fields(repo, table) do
+      columns = Enum.map(result.rows, &Enum.into(Enum.zip(result.columns, &1), %{}))
 
-    for row <- columns, row["column_name"] != "id" do
-      name = String.to_atom(row["column_name"])
-      type = resourceful_type(row["data_type"])
-      nullable? = row["is_nullable"] == "YES"
+      fields =
+        for row <- columns, row["column_name"] != "id" do
+          name = String.to_atom(row["column_name"])
+          type = resourceful_type(row["data_type"])
+          nullable? = row["is_nullable"] == "YES"
 
-      {name, {type, nullable?: nullable?}}
+          {name, {type, nullable?: nullable?}}
+        end
+
+      {:ok, fields}
     end
   end
 
   defp get_fields(repo, table) do
     sql = "SELECT * FROM information_schema.columns WHERE table_schema = $1 AND table_name = $2"
-    repo.query!(sql, ["public", table])
+    repo.query(sql, ["public", table])
   end
 
   defp resourceful_type("character varying"), do: :string
