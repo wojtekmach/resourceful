@@ -1,4 +1,6 @@
 defmodule BloggyWeb.Admin do
+  @external_resource "priv/repo/migrations"
+
   import Resourceful
 
   resource :post,
