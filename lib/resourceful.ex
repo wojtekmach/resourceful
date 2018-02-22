@@ -172,7 +172,10 @@ defmodule Resourceful.SchemaBuilder do
 
   defp get_fields(repo, table) do
     sql = "SELECT * FROM information_schema.columns WHERE table_schema = $1 AND table_name = $2"
-    repo.query(sql, ["public", table])
+    {:ok, repo.query!(sql, ["public", table])}
+  rescue
+    e ->
+      {:error, e}
   end
 
   defp resourceful_type("character varying"), do: :string
